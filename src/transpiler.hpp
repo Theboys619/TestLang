@@ -115,6 +115,10 @@ class Transpiler {
   std::string createType(Expression* exp, Spacing spacing) {
     if (exp->type == ExprTypes::String) {
       return "\"" + exp->value.getString() + "\"";
+    } else if (exp->type == ExprTypes::Integer) {
+      return exp->value.getString();
+    } else if (exp->type == ExprTypes::Double) {
+      return exp->value.getString();
     }
   }
 
@@ -132,8 +136,12 @@ class Transpiler {
     switch (exp->type) {
       case ExprTypes::Scope:
         return createScope(exp, spacing);
+
+      case ExprTypes::Integer:
+      case ExprTypes::Double:
       case ExprTypes::String:
         return createType(exp, spacing);
+
       case ExprTypes::FunctionCall:
         return createFuncCall(exp, spacing);
 

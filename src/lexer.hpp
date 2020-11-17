@@ -22,6 +22,12 @@ class Token {
     value = new int(val);
   };
 
+  Token(double val) {
+    type = "Double";
+
+    value = new double(val);
+  };
+
   Token(std::string val, bool isIdentifier = false) {
     type = isIdentifier ? "Identifier" : "String";
 
@@ -39,15 +45,21 @@ class Token {
   Token(std::string type, void* value): type(type), value(value) {};
 
   std::string getString() {
-    if (type == "Integer") {
-      return std::to_string(getInt());
-    }
-
     return *(std::string*)value;
   }
 
-  int getInt() {
+  int getInt(bool cast = false) {
+    if (cast)
+      return std::stoi(getString());
+
     return *(int*)value;
+  }
+
+  double getDouble(bool cast = false) {
+    if (cast)
+      return std::stod(getString());
+
+    return *(double*)value;
   }
 
   bool isNull() {
@@ -71,6 +83,8 @@ class Token {
       std::cout << beginning << ending;
     } else if (type == "EOF") {
       std::cout << beginning << "EOF'> : " << index << line << std::endl;
+    } else if (type == "Integer" || type == "Double") {
+      std::cout << beginning << getString() << "'> : " << index << ":" << line << std::endl;
     }
   }
 };
@@ -116,8 +130,15 @@ class Lexer {
     return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
   }
 
-  bool isNumber(char c) {
+  bool isDigit(char c) {
     return c >= '0' && c <= '9';
+  }
+
+  bool isNumber(char c) {
+    return (
+      (c == '-' && isDigit(peek()))
+      || isDigit(c)
+    );
   }
 
   bool isQuote(char c) {
@@ -132,6 +153,25 @@ class Lexer {
       || c == '/'
       || c == '%'
     );
+  }
+
+  bool isOperatorTwo(char c) {
+    return (
+      (c == '=' && peek() == '=')
+      || (c == '!' && peek() == '=')
+      || (c == '&' && peek() == '&')
+      || (c == '|' && peek() == '|')
+    );
+  }
+
+  std::string getOperator(char c) {
+    if (isOperator(c)) return std::string(1, c);
+    else if (
+      (c == '=' && peek() == '=')
+      || (c == '!' && peek() == '=')
+      || (c == '&' && peek() == '&')
+      || (c == '|' && peek() == '|')
+    ) return std::string(1, c) + std::string(1, peek());
   }
 
   std::vector<Token> tokenize() {
@@ -159,8 +199,52 @@ class Lexer {
         tokens.push_back(tok);
       }
 
-      if (isOperator(curChar)) {
+      if (isNumber(curChar)) {
+        std::string type = "Integer";
+        int ind = index;
+        int ln = line;
 
+        std::string val = "";
+
+        if (curChar == '-') {
+          val += curChar;
+          advance();
+        }
+
+        while (isNumber(curChar)) {
+          val += curChar;
+          advance();
+
+          if (curChar == '.') {
+            type = "Double";
+            val += ".";
+            advance();
+          }
+        }
+
+        Token tok = Token(type, val);
+        tok.index = ind;
+        tok.line = ln;
+
+        tokens.push_back(tok);
+      }
+
+      if (isOperator(curChar)) {
+        Token tok = Token("Operator", curChar);
+        tok.index = index;
+        tok.line = line;
+
+        advance();
+
+        tokens.push_back(tok);
+      } else if (isOperatorTwo(curChar)) {
+        Token tok = Token("Operator", getOperator(curChar));
+        tok.index = index;
+        tok.line = line;
+        
+        advance();
+
+        tokens.push_back(tok);
       }
 
       if (isQuote(curChar)) {

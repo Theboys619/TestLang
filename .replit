@@ -1,0 +1,2 @@
+language = "cpp"
+run = "make && ./TLLang.out run ./tests/text.tlt && make test && ./tests/text.out"

@@ -3,11 +3,16 @@
 
 void run(std::string dir, std::string filename) {
   std::string input = readFile(filename);
-  char abspath[_MAX_PATH];
 
-  #ifdef realpath
-    realpath(filename, abspath);
+  #ifndef _MAX_PATH
+    char abspath[FILENAME_MAX];
+    char* ptr;
+    ptr = realpath(filename.c_str(), abspath);
+
+    std::string fullpath = ptr;
+    fullpath = fullpath.substr(0, fullpath.find_last_of("\\/"));
   #else
+    char abspath[_MAX_PATH];
     std::string fullpath = _fullpath(abspath, filename.c_str(), _MAX_PATH);
     fullpath = fullpath.substr(0, fullpath.find_last_of("\\/"));
   #endif
@@ -36,10 +41,10 @@ void run(std::string dir, std::string filename) {
 
 int main(int argc, char** argv) {
 
-  std::string directory = argv[0];
+  std::string directory = std::string(argv[0]);
   directory.erase(directory.find_last_of('\\') + 1);
 
-  if (argc < 2) throw std::exception("Not Enough Arguments...");
+  if (argc < 2) throw std::exception();
 
   if (std::string(argv[1]) == "run")
     run(directory, argv[2]);

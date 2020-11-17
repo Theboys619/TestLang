@@ -28,6 +28,7 @@ class SyntaxError : public std::exception {
 enum class ExprTypes {
   None,
   Integer,
+  Double,
   String,
   Identifier,
   Assign,
@@ -215,6 +216,18 @@ class Parser {
       advance();
 
       return oldTok;
+    } else if (isType("Integer", curTok)) {
+      oldTok->type = ExprTypes::Integer;
+
+      advance();
+
+      return oldTok;
+    } else if (isType("Double", curTok)) {
+      oldTok->type = ExprTypes::Double;
+
+      advance();
+
+      return oldTok;
     }
 
     if (isType("Identifier", curTok)) {
@@ -236,6 +249,7 @@ class Parser {
   Expression* parse() {
     ast = new Expression(ExprTypes::Scope, Token("main", true));
     curTok = tokens[0];
+    // std::cout << tokens[1].type << std::endl;
 
     while (!curTok.isNull() && !isEOF()) {
       Expression* expr = pExpression();
